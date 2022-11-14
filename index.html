@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flying Ghost</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+*{
+    text-align: center;
+    font-family: 'Inter';
+}
+body{
+    border: solid #032361;
+    width: 1360px;
+    height: 600px;
+    margin-top: 8px;
+    background: url("Back2.png");
+    background-size: cover;
+}
+div{
+    margin: 2% auto;
+}
+#tampilanAwal{
+    animation: Abody 1s;
+}
+button{
+    width: 282px;
+    height: 45.63px;
+    /*background: linear-gradient(98.8deg, #2AFF07 45.34%, RGBA(42,255,7,0) 93.95%);*/
+    background-color: white;
+    border-radius: 59px;
+
+    font-style: normal;
+    font-weight: 600;
+    font-size: 20px;
+    line-height: 24px;
+}
+button:active{
+    background: RGBA(42,255,7,0) 93.95%;
+    color:  white;
+}
+#pemain img{
+    height: 80px;
+    width: 160px;
+}
+#volume{
+    position: absolute;
+    width: 400px;
+    height: 250px;
+    top: 70%;
+    left: 51%;
+    transform: translate(-50%,-50%);
+    border-radius: 119px;
+    background: antiquewhite;
+}
+.X{
+    position: absolute;
+    left: 75%;
+    top: 5%;
+    font-size: 40px;
+    color: red;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-weight: 900;
+}
+input[type=range]{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    accent-color: black;
+    width: 200px;
+}
+#restart{
+    position: fixed;
+    border-radius: 119px;
+    width: 400px;
+    height: 250px;
+    top: 50%;
+    left: 51%;
+    transform: translate(-50%,-50%);
+    background: antiquewhite;
+    animation: Arestart 1.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);;
+}
+canvas {
+    border:1px solid black;
+}
+</style>
+</head>
+<body>
+    <div class="border">
+        <div id="logo">
+            <h1 style="color: white; font-size: 100px; font-family: arial; ">Flying Ghost</h1>
+           <!-- <img src="bird.png" style="width: 350px; height:350px">  -->          
+        </div>
+        <div id="pemain" style="display: none; color:rgb(255,255,255); ">
+            <h2>Select a character</h2>
+            <img src="" style="display: none;">
+            <img src="Ghost1.png">
+            <img src="Ghost2.png">
+            <img src="Ghost3.png">
+        </div>
+        <div id="tampilanAwal">
+            <button onclick="choose()" style="margin-bottom: 2%;">Start</button><br>
+            <button id="setting" onclick="pengaturan()">Options</button>
+        </div>
+        <div  id="volume" style="display: none;" >
+            <p style="font-size: 25px;">Options</p>
+            <h2>AUDIO</h2>
+            <input type="range" min="0" max="100" step="1" value="50"><br><span class="X">X</span><br>
+
+        </div>
+    </div>
+    <div id="restart" style="display: none;">
+        <h1>GAME OVER</h1>
+        <h1>SCORE:<span id="skor">0</span></h1>
+        <button onclick="startGame()">RESTART</button>
+    </div>
+<script>
+//variable
+var myGamePiece;
+var myBackground;
+var myObstacles = [];
+var myScore;
+var mySound;
+var myMusic;
+var volumeslider = 0.5;
+var suara = document.querySelector('#volume input');
+var player = document.querySelectorAll('div#pemain img');
+
+//MENGHAPUS DIV TERTENTU
+function UI(){
+    document.querySelector('#tampilanAwal').style.display = "none";
+    document.querySelector('#restart').style.display = "none";
+}
+//MEMILIH PEMAIN
+function choose(){
+    UI();
+    document.getElementById('pemain').style.display = "";
+    
+}
+for(let i=0; i<player.length; i++){
+    player[i].addEventListener('mouseenter',function(e){
+        e.target.style.filter = 'drop-shadow(0px 0px 15px black)'
+    })
+    player[i].addEventListener('mouseleave',function(e){
+        e.target.style.filter = ''
+    })
+    player[i].addEventListener('click', function(){
+        iPlayer = i;
+        startGame();
+    })
+}
+function pengaturan(){
+    UI();
+    document.getElementById('volume').style.display= '';
+    setTimeout(function(){
+        document.getElementById('volume').style.animation= 'none';
+    },1000)
+    suara.addEventListener('input', function(){//MENGATUR VOLUME SUARA DENGAN INPUT RANGE
+        volumeslider = suara.value / 100;
+    });
+}
+document.addEventListener('click', function(e){//MENUTUP MENU SETTING
+    if(e.target === document.querySelector('#volume .X')){
+            document.querySelector('#tampilanAwal').style.display = "";
+            document.querySelector('#volume').style.display = "none";
+    }
+})
+function startGame() {//AWAL MULAI PERSIAPAN
+    myGamePiece = new component(80, 40, "Ghost"+iPlayer+".png", 10, 300,"image");
+    myBackground = new component(1360, 600, "Back2.png", 0, 0, "image");
+    myGamePiece.gravity = 0.05;
+    myScore = new component("30px", "Inter", "antiquewhite", 630, 40, "text");
+    myGameArea.start();
+    mySound = new sound('sound.mp3');
+    myMusic = new sound("music1.mp3");
+    GetScore = 0
+    UI();
+    document.querySelector('#pemain').style.display = "none";
+    document.querySelector('.border').style.display = "none";
+    myObstacles.splice(0, myObstacles.length);
+}
+
+var myGameArea = { //MEMBUAT CANVAS
+    canvas : document.createElement("canvas"),
+    start : function() {
+        this.canvas.width = 1360;
+        this.canvas.height = 600;
+        this.context = this.canvas.getContext("2d");
+        document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+        this.frameNo = 0;
+        this.interval = setInterval(updateGameArea, 20);
+          },
+    clear : function() {
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    },
+    stop : function() {
+        clearInterval(this.interval);
+        document.getElementById('restart').style.display = "";
+        document.getElementById('skor').innerHTML = GetScore;
+    }
+}
+//MENGATUR COMOPONENT OBJEK DENGAN PARAMETER
+function component(width, height, color, x, y, type) {
+    this.type=type;
+    if(type=="image"){
+        this.image = new Image();
+        this.image.src = color;
+    }
+    this.type = type;
+    this.width = width;
+    this.height = height;
+    this.speedX = 0;
+    this.speedY = 0;  
+    this.goX = 0  
+    this.goY = 0
+    this.x = x;
+    this.y = y;
+    this.gravity = 0.1;//gravitasinya
+    this.gravitySpeed = 0;//kecepatan turunnya
+    this.bounce = 0.2;
+
+    this.update = function() {
+        ctx = myGameArea.context;
+        if (this.type == "text") {
+            ctx.font = this.width + " " + this.height;
+            ctx.fillStyle = color;
+            ctx.fillText(this.text, this.x, this.y);
+    }
+    if (type == "image") {
+      ctx.drawImage(this.image,
+        this.x,
+        this.y,
+        this.width, this.height);
+    }  else {
+            ctx.fillStyle = color;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
+    }
+    this.newPos = function() {
+        this.gravitySpeed += this.gravity;
+        this.x += this.speedX;
+        this.y += this.speedY
+        this.y += this.speedY + this.gravitySpeed;
+
+        this.hitBottom();
+        this.hitTop();
+    }
+    this.hitBottom = function() { //MENAHAN PLAYER (BAGIAN BAWAH) KELUAR CANVAS
+    var rockbottom = myGameArea.canvas.height - this.height;
+    if (this.y > rockbottom) {
+      this.y = rockbottom;
+      this.gravitySpeed = -(this.gravitySpeed * this.bounce);
+    }
+  }
+    this.hitTop = function() { //MENAHAN PLAYER (BAGIAN ATAS) KELUAR CANVAS
+    var rocktop = 0;
+    if (this.y < rocktop) {
+      this.y = rocktop;
+      this.gravitySpeed = this.bounce;
+    }
+  }
+  this.DetectionScore = function(Scoreobj){
+        var myScoreleft = this.x
+        var myScoreright = this.x + 0.75
+        var ScoreLeft = Scoreobj.x
+        var Scoreright = Scoreobj.x + 0.75 
+        if (myScoreright >= ScoreLeft && myScoreleft <= Scoreright){
+                GetScore += 0.5
+                // Score.innerHTML = GetScore
+                // ScoreGame.innerHTML = GetScore
+        }
+    }
+    this.crashWith = function(otherobj) {
+        var myleft = this.x;
+        var myright = this.x + (this.width);
+        var mytop = this.y;
+        var mybottom = this.y + (this.height);
+        var otherleft = otherobj.x;
+        var otherright = otherobj.x + (otherobj.width);
+        var othertop = otherobj.y;
+        var otherbottom = otherobj.y + (otherobj.height);
+        var crash = true;
+        if ((mybottom < othertop) || (mytop > otherbottom) || (myright < otherleft) || (myleft > otherright)) {
+            crash = false;
+        }
+        return crash;
+    }
+}
+
+function updateGameArea() {
+    var x, height, gap, minHeight, maxHeight, minGap, maxGap, minobs, maxobs, obs
+    for (i = 0; i < myObstacles.length; i += 1) {
+         //KETIKA KARAKTER MENABRAK OBSTACLE
+        if (myGamePiece.crashWith(myObstacles[i])) {
+            mySound.play();
+            myMusic.stop();
+            myGameArea.stop();
+            return;
+        } 
+    }
+    
+    if(GetScore==100){
+        myMusic.stop();
+        myGameArea.stop();
+        document.querySelector('#restart h1').innerHTML = "SELAMAT";
+    }
+    myGameArea.clear();
+    myBackground.newPos();
+    myBackground.update();
+    myGameArea.frameNo += 1;
+    if (myGameArea.frameNo == 1 || everyinterval(300)) {
+        x = myGameArea.canvas.width;
+        minHeight = 80;
+        maxHeight = 200;
+        height = Math.floor(Math.random()*(maxHeight-minHeight+1)+minHeight);
+        minGap = 80;
+        maxGap = 200;
+        gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);
+        minobs = 125;
+        maxobs = 300;
+        obs = Math.floor(Math.random()*(maxobs-minobs+1)+minobs);
+        myObstacles.push(new component(38, height + gap - obs, "obs.png", x, 0,"image"));
+        myObstacles.push(new component(38, x - height - gap, "obs.png", x, height + gap,"image"));
+    }
+    for (i = 0; i < myObstacles.length; i += 1) {
+        //KECEPATAN OBSTACLE
+        myGamePiece.DetectionScore(myObstacles[i])
+        myObstacles[i].x += -1.5; 
+        myObstacles[i].update();
+    }
+    myScore.text="SCORE: " + GetScore
+    myScore.update();
+    myGamePiece.newPos();    
+    myGamePiece.update();
+    myMusic.play(); 
+}
+function sound(src) {//PENGATURAN SUARA
+    this.sound = document.createElement("audio");
+    this.sound.src = src;
+    this.sound.setAttribute("preload", "auto");
+    this.sound.setAttribute("controls", "none");
+    this.sound.style.display = "none";
+    this.sound.volume = volumeslider;
+    document.body.appendChild(this.sound);
+ 
+    this.play = function(){
+        this.sound.play();
+    }
+    this.stop = function(){
+        this.sound.pause();
+    }    
+}
+
+function everyinterval(n) {//untuk naik turun karakter 
+    if ((myGameArea.frameNo / n) % 1 == 0) {return true;}
+    return false;
+}
+
+function accelerate(n) {
+    if (!myGameArea.interval) {myGameArea.interval = setInterval(updateGameArea, 20);}
+    
+    myGamePiece.gravity = n;
+}
+// CONTROLLER
+document.addEventListener("keydown", function(e) {
+    if(e.which==32){
+        accelerate(-0.2);
+    }
+});
+document.addEventListener("keyup", function(e) {
+    if(e.which===32){
+        accelerate(0.1);
+    }
+});
+</script>
+</body>
+</html>
